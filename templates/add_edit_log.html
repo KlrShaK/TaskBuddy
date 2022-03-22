@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <!-- FLASH MESSAGES -->
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{message}}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>    
+    {% endfor %}
+
+    <!-- Add Card -->
+        <div style="margin-left: 25%; margin-right: 25%;" >
+            <h1 style="text-align:center;">{{ formtitle }}</h1>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <br>
+                {{ form.timestamp(class='form-control') }}
+                <br>
+                {{ form.value(class='form-control') }}
+                <br>
+                {{ form.notes(class='form-control') }}
+                <br>
+                {{ form.submit(class='form-control btn btn-primary') }}
+            </form>
+        </div>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br xmlns="http://www.w3.org/1999/html">
+    <h1 style="text-align: center;">Welcome to TaskBuddy</h1>
+    <br>
+    <h2 style="text-align: center;">You can use this app to efficiently manage your Tasks!!!</h2>
+    <h2 style="text-align: center;">Login and create multiple Trackers for different Tasks</h2>
+    <h2 style="text-align: center;">Then you can log your tasks for different Trackers</h2>
+    <h2 style="text-align: center;">Easily review and track your progress</h2>
+    <br>
+    <h2 style="text-align: center;">If you already have an Account. <a href="{{ url_for('login') }}"> Login Here! </a></h2>
+    <h2 style="text-align: center;">If you are a new user. <a href="{{ url_for('register') }}"> Register Now!</a></h2>
+
+{% endblock %}
