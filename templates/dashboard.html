@@ -28,10 +28,10 @@
                         <p>Settings: {{ tracker.settings }}</p>
                     {% endif %}
                     <p>Last Updated at: {{ tracker.last_reviewed }}</p>
-                    <div class="align-item-end">
-                        <a class="btn btn-primary" href="{{url_for('delete_tracker',trackerid=tracker.tracker_id)}}" class="card-link">Delete Deck</a>
-                        <a class="btn btn-primary" href="{{url_for('edit_tracker',trackerid=tracker.tracker_id)}}" class="card-link">Edit Deck</a>
-                        <a class="btn btn-primary" href="{{url_for('add_log',trackerid=tracker.tracker_id)}}" class="card-link">Add Logs</a>
+                    <div class="align-item-end justify-content-center">
+                        <a class="btn btn-primary" style="padding: 5px;" href="{{url_for('delete_tracker',trackerid=tracker.tracker_id)}}" class="card-link">Delete Tracker</a>
+                        <a class="btn btn-primary" style="padding: 5px;" href="{{url_for('edit_tracker',trackerid=tracker.tracker_id)}}" class="card-link">Edit Tracker</a>
+                        <a class="btn btn-primary" style="padding: 5px;" href="{{url_for('add_log',trackerid=tracker.tracker_id)}}" class="card-link">Add Logs</a>
                     </div>
                 </div>
             </div>

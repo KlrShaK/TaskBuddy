@@ -55,7 +55,7 @@
                     <h6 class="card-text" style="text-align: center;">Value : {{ log.value_mcq_choice }}</h6>
                 {% endif %}
                 <p style="text-align: center;" class="log-text">Notes : {{log.notes}}</p>
-                <a href="{{url_for('edit_log',logid = log.log_id, trackerid=log.tracker_id)}}" class="log-link">Edit Card</a>
+                <a href="{{url_for('edit_log',logid = log.log_id, trackerid=log.tracker_id)}}" class="log-link">Edit Log</a>
                 <a href="{{ url_for('delete_log',logid = log.log_id,trackerid=log.tracker_id) }}" style="margin-left: 70%;"><i class="bi bi-trash-fill"></i></a>
             </div>
         </div>

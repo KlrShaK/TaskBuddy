@@ -49,7 +49,6 @@ def login():
                 flash("Wrong Password!!!")
         else:
             flash("User doesn't exists!!! Please register")
-
     return render_template("login.html", form=form)
 
 
@@ -68,7 +67,7 @@ def register():
         first_name = form.firstname.data
         last_name = form.lastname.data
         user = User.query.filter_by(user_name=form.username.data).first()
-        if user == None:
+        if user is None:
             u = User(user_name=form.username.data, hashed_password=generate_password_hash(form.password.data),
                      firstname=form.firstname.data, lastname=form.lastname.data)
             db.session.add(u)
@@ -171,7 +170,7 @@ def add_log(trackerid):
         timestamp = form.timestamp.data
         notes = form.notes.data
         # update last reviewed
-        if temp_tracker.last_reviewed < timestamp:
+        if temp_tracker.last_reviewed > timestamp:
             temp_tracker.last_reviewed = timestamp
 
         log = Log.query.filter_by(timestamp=timestamp, tracker_id=int(trackerid), user_id=temp_tracker.user_id).first()
@@ -205,14 +204,17 @@ def view_logs(trackerid):
     yaxis = []
     logs = Log.query.filter_by(tracker_id= int(trackerid), user_id= current_user.get_id()).order_by(Log.timestamp.asc())
     # for Plotting Graph
-    temp_log = logs.first()
-    if temp_log.value:
-        plot_flag = True
-        for log in logs:
-            stamp = log.timestamp.strftime("%Y-%m-%d %H-%M")
-            dataPoint = log.value
-            xaxis.append(stamp)
-            yaxis.append(dataPoint)
+    try:
+        temp_log = logs.first()
+        if temp_log.value:
+            plot_flag = True
+            for log in logs:
+                stamp = log.timestamp.strftime("%Y-%m-%d %H-%M")
+                dataPoint = log.value
+                xaxis.append(stamp)
+                yaxis.append(dataPoint)
+    except:
+        print("No files in Log")
 
     return render_template("view_logs.html", logs=logs, trackerid=trackerid, x_axis=xaxis,y_axis=yaxis, plot_flag=plot_flag)
 
@@ -277,27 +279,3 @@ def edit_log(logid, trackerid):
                     return redirect(url_for("edit_log", trackerid=trackerid, logid=logid))
 
     return render_template("add_edit_log.html", form=form, formtitle="Edit Log")
-
-@app.route("/review_card/<logid>", methods=['GET', 'POST'])
-@login_required
-def review_card(logid):
-    # form = ReviewCardForm()
-    # card = Card.query.filter_by(id=int(cardid)).first()
-    # if form.validate_on_submit():
-    #     rating = form.rate.data
-    #     card.card_score = int(rating)
-    #     card.last_reviewed = datetime.now().strftime('%d-%m-%Y %H:%M')
-    #     trackerid = card.deck_id
-    #     deck = Deck.query.filter_by(deck_id=trackerid).first()
-    #     cards = deck.cards
-    #     deckscore = 0
-    #     for card in cards:
-    #         deckscore += card.card_score
-    #     deck.deck_score = deckscore
-    #     deck.last_reviewed = datetime.now().strftime('%d-%m-%Y %H:%M')
-    #     db.session.commit()
-    #     return redirect(url_for("view_cards", trackerid=int(card.deck_id)))
-    #
-    # return render_template("reviewcard.html", form=form, card=card)
-    return "review_card page"
-
