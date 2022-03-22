@@ -164,7 +164,7 @@ def add_log(trackerid):
     log = None
     if temp_tracker.tracker_type != '0':
         choices = temp_tracker.settings
-
+        flash("You Can Only choose value from {}".format(choices))
     # activate Form
     form = AddLogForm()
     if form.validate_on_submit():
@@ -180,7 +180,6 @@ def add_log(trackerid):
                 value = float(form.value.data)
                 log = Log(timestamp=timestamp, value=value, value_mcq_choice=None, notes= notes, tracker_id=int(trackerid), user_id=current_user.get_id())
             else:
-                flash("You Can Only choose value from {}".format(choices))
                 choices = eval(temp_tracker.settings)
                 temp_value = form.value.data
                 if temp_value in choices:
@@ -201,8 +200,21 @@ def add_log(trackerid):
 @login_required
 def view_logs(trackerid):
     logs = None
-    logs = Log.query.filter_by(tracker_id= int(trackerid), user_id= current_user.get_id()).order_by(Log.timestamp.desc())
-    return render_template("view_logs.html", logs=logs, trackerid=trackerid)
+    plot_flag=False
+    xaxis = []
+    yaxis = []
+    logs = Log.query.filter_by(tracker_id= int(trackerid), user_id= current_user.get_id()).order_by(Log.timestamp.asc())
+    # for Plotting Graph
+    temp_log = logs.first()
+    if temp_log.value:
+        plot_flag = True
+        for log in logs:
+            stamp = log.timestamp.strftime("%Y-%m-%d %H-%M")
+            dataPoint = log.value
+            xaxis.append(stamp)
+            yaxis.append(dataPoint)
+
+    return render_template("view_logs.html", logs=logs, trackerid=trackerid, x_axis=xaxis,y_axis=yaxis, plot_flag=plot_flag)
 
 
 @app.route("/delete_card/<logid>/<trackerid>", methods=['GET', 'POST'])
@@ -227,10 +239,14 @@ def delete_log(logid, trackerid):
 def edit_log(logid, trackerid):
     log = None
     temp_tracker = Tracker.query.filter_by(tracker_id=int(trackerid)).first()
-    form = AddLogForm()
     flash("Leave Blank any field you don't wish to Edit.")
-    if form.validate_on_submit():
+    form = AddLogForm()
+    if form.is_submitted():
         log = Log.query.filter_by(log_id=logid).first()
+        if form.notes.data != '':
+            print("done")
+            log.notes = form.notes.data
+
         if form.timestamp.data != '':
             if temp_tracker.last_reviewed > form.timestamp.data:
                 temp_tracker.last_reviewed = form.timestamp.data
@@ -243,10 +259,10 @@ def edit_log(logid, trackerid):
             else:
                 log.timestamp = form.timestamp.data
 
-        if form.notes.data != '': Log.notes = form.notes.data
         if form.value.data != '':
             if temp_tracker.tracker_type == '0':
                 log.value = float(form.value.data)
+                db.session.commit()
                 return redirect(url_for("view_logs", trackerid=trackerid))
             else:
                 flash("You Can Only choose value from {}".format(choices))
@@ -254,6 +270,7 @@ def edit_log(logid, trackerid):
                 temp_value = form.value.data
                 if temp_value in choices:
                     log.value = temp_value
+                    db.session.commit()
                     return redirect(url_for("view_logs", trackerid=trackerid))
                 else:
                     flash("Invalid Choice")

@@ -12,8 +12,38 @@
         </div>    
     {% endfor %}
 
+    <div class="graph" align="center" style="padding-bottom: 25px;">
+        <!-- PLOT GRAPH -->
+        {% if plot_flag %}
+            <canvas id="lineChart" width="900" height="400"></canvas>
+            <script style="align-self: center">
+                var ctx = document.getElementById("lineChart").getContext("2d")
+                var lineChart = new Chart(ctx, {
+                    type:"line",
+                    data: {
+                        labels: {{ x_axis | safe }},
+                        datasets: [
+                            {
+                                label: "Data Points",
+                                data: {{ y_axis | safe }},
+                                fill: false,
+                                borderColor: "rgb(75,192,192)",
+                                lineTension: 0.1
+                            }
+                        ]
+                    },
+                options:{
+                        responsive: false
+                    }
+                });
+            </script>
+        {% endif %}
+    </div>
+
+
     <!-- DISPLAYING CARDS -->
     <div class="row">
+
         {% for log in logs %}
         <div class=" col-md-4 card" style="padding: 1%;">
             <div class="card-body" id="{{log.tracker_id}}">
