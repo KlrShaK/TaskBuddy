@@ -25,7 +25,7 @@ def about():
 @login_required
 def dashboard():
     trackers_temp = None
-    trackers_temp = Tracker.query.filter_by(user_id=current_user.get_id()).all()
+    trackers_temp = Tracker.query.filter_by(user_id=current_user.get_id()).order_by(Tracker.last_reviewed).all()
     return render_template("dashboard.html", trackers=trackers_temp)
 
 
@@ -164,20 +164,23 @@ def add_log(trackerid):
     log = None
     if temp_tracker.tracker_type != '0':
         choices = temp_tracker.settings
-        flash("You Can Only choose value from {}".format(choices))
+
     # activate Form
     form = AddLogForm()
     if form.validate_on_submit():
-        flash("validated")
         timestamp = form.timestamp.data
-        print("time_stamp: ", timestamp)
         notes = form.notes.data
+        # update last reviewed
+        if temp_tracker.last_reviewed < timestamp:
+            temp_tracker.last_reviewed = timestamp
+
         log = Log.query.filter_by(timestamp=timestamp, tracker_id=int(trackerid), user_id=temp_tracker.user_id).first()
         if log is None:
             if temp_tracker.tracker_type == '0':
                 value = float(form.value.data)
-                log = Log(timestamp=timestamp, value=value, value_mcq_choice=None, notes= notes, tracker_id=int(trackerid), user_id=temp_tracker.user_id)
+                log = Log(timestamp=timestamp, value=value, value_mcq_choice=None, notes= notes, tracker_id=int(trackerid), user_id=current_user.get_id())
             else:
+                flash("You Can Only choose value from {}".format(choices))
                 choices = eval(temp_tracker.settings)
                 temp_value = form.value.data
                 if temp_value in choices:
@@ -186,52 +189,81 @@ def add_log(trackerid):
                               user_id=temp_tracker.user_id)
                 else:
                     flash("Invalid Choice of values")
+                    return redirect(url_for("add_log", trackerid=trackerid))
 
             db.session.add(log)
             db.session.commit()
             flash("Success")
-            return "log_added_Sucessfully" #redirect(url_for("view_cards", deckid=deckid))
-    flash("failed")
-    print("form_errors",form.errors)
+            return redirect(url_for("view_logs", trackerid=trackerid))
     return render_template("add_edit_log.html", form=form, formtitle="Add Log")
 
-@app.route("/view_cards/<trackerid>", methods=['GET', 'POST'])
+@app.route("/view_logs/<trackerid>", methods=['GET', 'POST'])
 @login_required
-def view_tracker(trackerid):
-    # cards = None
-    # cards = Card.query.filter_by(deck_id=trackerid)
-    # return render_template("tracker.html", cards=cards, trackerid=trackerid)
-    return "view card page"
+def view_logs(trackerid):
+    logs = None
+    logs = Log.query.filter_by(tracker_id= int(trackerid), user_id= current_user.get_id()).order_by(Log.timestamp.desc())
+    return render_template("view_logs.html", logs=logs, trackerid=trackerid)
 
 
-@app.route("/delete_card/<cardid>/<trackerid>", methods=['GET', 'POST'])
+@app.route("/delete_card/<logid>/<trackerid>", methods=['GET', 'POST'])
 @login_required
-def delete_card(cardid, trackerid):
-    # card = Card.query.filter_by(id=int(cardid)).first()
-    # Card.query.filter_by(id=int(cardid)).delete()
-    # deck = Deck.query.filter_by(deck_id=trackerid).first()
-    # deck.deck_score -= card.card_score
-    # db.session.commit()
-    # flash("Card Deleted!!!")
+def delete_log(logid, trackerid):
+    log = Log.query.filter_by(log_id=logid).first()
+    Log.query.filter_by(log_id=logid).delete()
+    tracker = Tracker.query.filter_by(tracker_id=trackerid).first()
+    #Change last review
+    if tracker.last_reviewed == log.timestamp:
+        temp_logs = Log.query.filter_by(tracker_id=trackerid).order_by(Log.timestamp.desc())
+        max_date = max(elem.timestamp for elem in temp_logs)
+        tracker.last_reviewed = max_date
+
+    db.session.commit()
+    flash("Log Deleted!!!")
     # return redirect(url_for("view_cards", trackerid=int(trackerid)))
-    return "delete_card page"
+    return redirect(url_for("view_logs", trackerid=int(trackerid)))
 
-@app.route("/edit_card/<cardid>", methods=['GET', 'POST'])
+@app.route("/edit_card/<logid>/<trackerid>", methods=['GET', 'POST'])
 @login_required
-def edit_card(cardid):
-    # card = None
-    # form = AddCardForm()
-    # if form.validate_on_submit():
-    #     card = Card.query.filter_by(id=int(cardid)).first()
-    #     card.question, card.answer = form.question.data, form.answer.data
-    #     db.session.commit()
-    #     return redirect(url_for("view_cards", trackerid=card.deck_id))
-    # return render_template("add_edit_log.html", form=form, formtitle="Edit")
-    return "edit card page"
+def edit_log(logid, trackerid):
+    log = None
+    temp_tracker = Tracker.query.filter_by(tracker_id=int(trackerid)).first()
+    form = AddLogForm()
+    flash("Leave Blank any field you don't wish to Edit.")
+    if form.validate_on_submit():
+        log = Log.query.filter_by(log_id=logid).first()
+        if form.timestamp.data != '':
+            if temp_tracker.last_reviewed > form.timestamp.data:
+                temp_tracker.last_reviewed = form.timestamp.data
+                log.timestamp = form.timestamp.data
+            elif log.timestamp == temp_tracker.last_reviewed and form.timestamp.data < log.timestamp:
+                log.timestamp = form.timestamp.data
+                temp_logs = Log.query.filter_by(tracker_id=trackerid).order_by(Log.timestamp.desc())
+                max_date = max(elem.timestamp for elem in temp_logs)
+                temp_tracker.last_reviewed = max_date
+            else:
+                log.timestamp = form.timestamp.data
 
-@app.route("/review_card/<cardid>", methods=['GET', 'POST'])
+        if form.notes.data != '': Log.notes = form.notes.data
+        if form.value.data != '':
+            if temp_tracker.tracker_type == '0':
+                log.value = float(form.value.data)
+                return redirect(url_for("view_logs", trackerid=trackerid))
+            else:
+                flash("You Can Only choose value from {}".format(choices))
+                choices = eval(temp_tracker.settings)
+                temp_value = form.value.data
+                if temp_value in choices:
+                    log.value = temp_value
+                    return redirect(url_for("view_logs", trackerid=trackerid))
+                else:
+                    flash("Invalid Choice")
+                    return redirect(url_for("edit_log", trackerid=trackerid, logid=logid))
+
+    return render_template("add_edit_log.html", form=form, formtitle="Edit Log")
+
+@app.route("/review_card/<logid>", methods=['GET', 'POST'])
 @login_required
-def review_card(cardid):
+def review_card(logid):
     # form = ReviewCardForm()
     # card = Card.query.filter_by(id=int(cardid)).first()
     # if form.validate_on_submit():
