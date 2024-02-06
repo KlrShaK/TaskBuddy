@@ -27,6 +27,6 @@ pytz==2021.3
 six==1.16.0
 SQLAlchemy==1.4.27
 watchdog==2.1.6
-Werkzeug==2.0.2
+Werkzeug==2.3.8
 WTForms==2.3.3
 zipp==3.6.0
